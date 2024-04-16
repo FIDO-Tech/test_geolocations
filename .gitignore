@@ -28,3 +28,6 @@ archive.zip
 
 # macOS
 .DS_Store
+
+output.csv
+us_cities.csv
