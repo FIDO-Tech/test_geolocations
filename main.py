@@ -19,14 +19,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing_extensions import Optional
 
 from database import get_async_session
-from models import City, Dma
+from models import City, Dma, Pipe
 from schemas import (
     CitySchema,
     DmaSchema,
     NearbyCitiesByCoordsSchema,
     NearbyCitiesSchema,
 )
-from services import is_city_table_empty, is_dma_table_empty
+from services import is_city_table_empty, is_dma_table_empty, is_pipes_table_empty
 
 app = FastAPI()
 
@@ -65,55 +65,115 @@ async def load_cities(db_session: AsyncSession = Depends(get_async_session)):
 
 @app.get("/load-dmas")
 async def load_dmas(db_session: AsyncSession = Depends(get_async_session)):
-    if await is_dma_table_empty(db_session):
-        csv.field_size_limit(10000000)
-        dmas = []
-        with open("output.csv", "r") as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=",")
+    try:
+        if await is_dma_table_empty(db_session):
+            csv.field_size_limit(10000000)
+            dmas = []
+            with open("output.csv", "r") as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=";")
 
-            # Skip the first row (header)
-            next(csv_reader)
+                # Skip the first row (header)
+                next(csv_reader)
 
-            for row in csv_reader:
-                wkt_geom = None
+                for row in csv_reader:
+                    wkt_geom = None
 
-                # Check if the geometry field is not empty
-                if row[6]:
-                    polygon = loads(row[6])
-                    if (
-                        polygon.geom_type == "Polygon"
-                        or polygon.geom_type == "MultiPolygon"
-                    ):
-                        wkt_geom = polygon.wkt
-                    else:
-                        # Handle the case of unsupported geometry type
-                        print(
-                            f"Unsupported geometry type for DMA {row[2]}: {polygon.geom_type}"
-                        )
-                        continue  # Skip this row due to invalid geometry type
+                    # Check if the geometry field is not empty
+                    if row[6]:
+                        polygon = loads(row[6])
+                        if (
+                            polygon.geom_type == "Polygon"
+                            or polygon.geom_type == "MultiPolygon"
+                        ):
+                            wkt_geom = polygon.wkt
+                        else:
+                            # Handle the case of unsupported geometry type
+                            print(
+                                f"Unsupported geometry type for DMA {row[2]}: {polygon.geom_type}"
+                            )
+                            continue  # Skip this row due to invalid geometry type
 
-                dma = Dma(
-                    # dma_id=row[0],
-                    dma_key=row[1],
-                    dma_name=row[2],
-                    dma_long=row[3],
-                    region=row[4],
-                    zone=row[5],
-                    geom=wkt_geom,
-                    max_bug_coverage=float(row[7]) if row[7] else None,
-                    start_date=datetime.strptime(row[8], "%Y-%m-%d").date()
-                    if row[8]
-                    else None,
-                    end_date=datetime.strptime(row[9], "%Y-%m-%d").date()
-                    if row[9]
-                    else None,
-                    # geo_location=f"POINT({row[5]} {row[6]})",
-                )
-                dmas.append(dma)
-            db_session.add_all(dmas)
-            await db_session.commit()
-            return {"message": "Data loaded successfully"}
+                    dma = Dma(
+                        # dma_id=row[0],
+                        dma_key=row[1],
+                        dma_name=row[2],
+                        dma_long=row[3],
+                        region=row[4],
+                        zone=row[5],
+                        geom=wkt_geom,
+                        max_bug_coverage=float(row[7]) if row[7] else None,
+                        start_date=datetime.strptime(row[8], "%Y-%m-%d").date()
+                        if row[8]
+                        else None,
+                        end_date=datetime.strptime(row[9], "%Y-%m-%d").date()
+                        if row[9]
+                        else None,
+                        # geo_location=f"POINT({row[5]} {row[6]})",
+                    )
+                    dmas.append(dma)
+                db_session.add_all(dmas)
+                await db_session.commit()
+                return {"message": "Data loaded successfully"}
+    except Exception as e:
+        print(e)
+        return {"message": "An error occurred while loading data"}
 
+    return {"message": "Data is already loaded"}
+
+
+@app.get("/load-pipes")
+async def load_pipes(db_session: AsyncSession = Depends(get_async_session)):
+    try:
+        if await is_pipes_table_empty(db_session):
+            csv.field_size_limit(10000000)
+            pipes = []
+            with open("output_pipes.csv", "r") as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=";")
+
+                # Skip the first row (header)
+                next(csv_reader)
+
+                for row in csv_reader:
+                    wkt_geom = None
+                    # Check if the geometry field is not empty
+                    if row[1]:
+                        line = loads(row[1])
+                        if (
+                            line.geom_type == "LineString"
+                            or line.geom_type == "MultiLineString"
+                        ):
+                            wkt_geom = line.wkt
+                        else:
+                            # Handle the case of unsupported geometry type
+                            print(
+                                f"Unsupported geometry type for Pipe {row[2]}: {line.geom_type}"
+                            )
+                            continue  # Skip this row due to invalid geometry type
+
+                    pipe = Pipe(
+                        # pipe_id=row[0],
+                        geom=wkt_geom,
+                        material=row[2],
+                        pipe_key=row[3],
+                        created_date=datetime.strptime(
+                            row[4], "%Y-%m-%d %H:%M:%S"
+                        ).date()
+                        if row[4]
+                        else None,
+                        diameter_mm=float(row[5]) if row[5] else None,
+                        pipe_type=row[6],
+                        pipe_subtype=row[7],
+                        standardised_material=row[8],
+                        dma_id=int(row[9]) if row[9] else None,
+                        company_id=int(row[10]) if row[10] else None,
+                    )
+                    pipes.append(pipe)
+                db_session.add_all(pipes)
+                await db_session.commit()
+                return {"message": "Data loaded successfully"}
+    except Exception as e:
+        print(e)
+        return {"message": "An error occurred while loading data"}
     return {"message": "Data is already loaded"}
 
 

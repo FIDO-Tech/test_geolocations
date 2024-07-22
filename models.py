@@ -47,7 +47,7 @@ class Pipe(Base):
     # Using explicit column types with additional parameters such as primary_key and autoincrement
     pipe_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     geom: Mapped[WKBElement] = mapped_column(
-        Geometry(geometry_type="LINESTRING", srid=4326), nullable=True
+        Geometry(geometry_type="GEOMETRY", srid=4326), nullable=True
     )
     material: Mapped[str] = mapped_column(String(200), nullable=True)
     pipe_key: Mapped[str] = mapped_column(String(100), nullable=True)
@@ -57,13 +57,13 @@ class Pipe(Base):
     pipe_subtype: Mapped[str] = mapped_column(String(45), nullable=True)
     standardised_material: Mapped[str] = mapped_column(String(45), nullable=True)
     dma_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("dmas.dma_id"), nullable=True
-    )
+        Integer, nullable=True
+    )  # ForeignKey("dmas.dma_id"),
     company_id: Mapped[int] = mapped_column(Integer, nullable=True)
-    geom_indexed: Mapped[WKBElement] = mapped_column(
-        Geometry(geometry_type="LINESTRING", srid=4326, spatial_index=True),
-        nullable=True,
-    )
+    # geom_indexed: Mapped[WKBElement] = mapped_column(
+    #     Geometry(geometry_type="GEOMETRY", srid=4326, spatial_index=True),
+    #     nullable=True,
+    # )
 
 
 class Asset(Base):

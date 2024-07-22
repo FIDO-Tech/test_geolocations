@@ -76,3 +76,54 @@ class DmaSchema(BaseModel):
     #     if v is not None:
     #         return shape(json.loads(v)).wkt
     #     return v
+
+
+class PipeSchema(BaseModel):
+    pipe_id: Optional[int]
+    geom: Optional[str]
+    material: Optional[str]
+    pipe_key: Optional[str]
+    created_date: Optional[date]
+    diameter_mm: Optional[float]
+    pipe_type: Optional[str]
+    pipe_subtype: Optional[str]
+    standardised_material: Optional[str]
+    dma_id: Optional[int]
+    company_id: Optional[int]
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "pipe_id": 1,
+                "geom": "LINESTRING(-70.6693 43.0722, -70.6693 43.0723)",
+                "material": "PVC",
+                "pipe_key": "2300",
+                "created_date": "2023-04-01",
+                "diameter_mm": 100.0,
+                "pipe_type": "Water",
+                "pipe_subtype": "Main",
+                "standardised_material": "PVC",
+                "dma_id": 1,
+                "company_id": 1,
+            }
+        }
+
+    @field_validator("geom", mode="before")
+    def turn_geo_location_into_wkt(cls, value):
+        if value is not None:
+            return to_shape(value).wkt
+        return value
+
+    # @classmethod
+    # def from_orm(cls, obj):
+    #     obj_data = obj.__dict__.copy()
+    #     if "geom" in obj_data and isinstance(obj_data["geom"], WKBElement):
+    #         geom_wkt = loads(bytes(obj_data["geom"])).wkt
+    #         obj_data["geom"] = geom_wkt
+    #     return cls(**obj_data)
+
+    # @validator("geom", pre=True, allow_reuse=True)
+    # def turn_geo_location_into_wkt(cls, v):
+    #     if v is not None:
+    #         return shape(json.loads(v)).wkt
+    #     return v
