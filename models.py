@@ -2,9 +2,11 @@ from datetime import date
 
 from geoalchemy2 import Geometry, WKBElement
 from sqlalchemy import Date, Float, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column
 
-from database import Base
+Base = declarative_base()
+metadata = Base.metadata
 
 
 class City(Base):
@@ -77,7 +79,7 @@ class Asset(Base):
     )
     created_date: Mapped[date] = mapped_column(Date, nullable=True)
     diameter_mm: Mapped[float] = mapped_column(Float, nullable=True)
-    standardised_asset_type: Mapped[str] = mapped_column(String(45), nullable=True)
+    standardised_asset_type: Mapped[str] = mapped_column(String(65), nullable=True)
     dma_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("dmas.dma_id"), nullable=True
     )

@@ -7,6 +7,7 @@ from geoalchemy2.functions import (
     ST_Distance,
     ST_DWithin,
     ST_GeogFromText,
+    ST_GeogFromWKB,
     ST_GeomFromText,
     ST_Intersects,
     ST_MakePoint,
@@ -268,7 +269,7 @@ async def get_total_area(
         description="The region to calculate the total area for. (europe, usa, india)",
         default="europe",
     ),
-    dma_key: Optional[str] = None,
+    dma_key: str = Query(description="The DMA key to filter by. (314-07)"),
     db_session: AsyncSession = Depends(get_async_session),
 ):
     epsg_codes = {

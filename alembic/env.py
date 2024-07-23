@@ -6,11 +6,11 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
-from database import Base
-from models import Asset, City, Dma, Pipe  # noqa: F401
+from models import Asset, Base, City, Dma, Pipe  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
+
 config = context.config
 
 # Interpret the config file for Python logging.
@@ -66,6 +66,7 @@ def do_run_migrations(connection: Connection) -> None:
         connection=connection,
         target_metadata=target_metadata,
         include_name=include_name,
+        compare_type=True,
     )
 
     with context.begin_transaction():
