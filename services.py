@@ -5,6 +5,14 @@ from models import City, Dma, Pipe
 
 
 async def is_city_table_empty(db_session: AsyncSession):
+    """
+    Check if the city table is empty.
+    Parameters:
+    - db_session (AsyncSession): The database session.
+    Returns:
+    - bool: True if the city table is empty, False otherwise.
+    """
+
     query = select(City.id.isnot(None))
     query = select(exists(query))
     result = await db_session.execute(query)
